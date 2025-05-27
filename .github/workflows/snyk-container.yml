@@ -15,8 +15,8 @@ jobs:
   snyk:
     permissions:
       contents: read           # Para checkout
-      security-events: write  # Para subir SARIF a GitHub
-      actions: read            # Solo necesario para repos privados
+      security-events: write  # Para subir SARIF
+      actions: read            # Necesario para privados
     runs-on: ubuntu-latest
 
     steps:
@@ -35,7 +35,19 @@ jobs:
     - name: Escanear imagen Docker y generar SARIF
       run: snyk container test my-app --file=Dockerfile --sarif-file-output=snyk.sarif || true
 
-    - name: Subir resultados a GitHub Code Scanning
+    - name: Corregir severidades nulas en SARIF
+      run: |
+        jq '
+          .runs[].tool.driver.rules |= map(
+            if .properties != null and (.properties."security-severity" == null or .properties."security-severity" == "null") then
+              .properties."security-severity" = 0
+            else
+              .
+            end
+          )
+        ' snyk.sarif > fixed-snyk.sarif
+
+    - name: Subir resultados corregidos a GitHub Code Scanning
       uses: github/codeql-action/upload-sarif@v3
       with:
-        sarif_file: snyk.sarif
+        sarif_file: fixed-snyk.sarif
