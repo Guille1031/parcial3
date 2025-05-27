@@ -14,9 +14,9 @@ permissions:
 jobs:
   snyk:
     permissions:
-      contents: read           # Para checkout
-      security-events: write  # Para subir SARIF
-      actions: read            # Necesario para privados
+      contents: read
+      security-events: write
+      actions: read
     runs-on: ubuntu-latest
 
     steps:
@@ -40,7 +40,7 @@ jobs:
         jq '
           .runs[].tool.driver.rules |= map(
             if .properties != null and (.properties."security-severity" == null or .properties."security-severity" == "null") then
-              .properties."security-severity" = 0
+              .properties."security-severity" = "0"
             else
               .
             end
